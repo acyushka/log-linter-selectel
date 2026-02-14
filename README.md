@@ -27,36 +27,43 @@
 # Подключение к golangci-lint
 
 1. **Склонировать репозитории, если их нет**
-   ```bash
-   git clone https://github.com/golangci/golangci-lint
-   git clone https://github.com/acyushka/log-linter-selectel
-   ```
+    ```bash
+    git clone https://github.com/golangci/golangci-lint
+    git clone https://github.com/acyushka/log-linter-selectel
+    ```
 
 2. **Перенести файл плагина в golangci-lint**
-   ```bash
-   cp loglinter/pkg/plugin/loglinter.go golangci-lint/pkg/golinters/loglinter/
-   ```
+    ```bash
+    cp loglinter/pkg/plugin/loglinter.go golangci-lint/pkg/golinters/loglinter/
+    ```
 
 3. **Зарегистрировать линтер**
    
    Открыть `golangci-lint/pkg/lint/lintersdb/builder_linter.go` и добавить:
 
-   ```go
-   import "github.com/golangci/golangci-lint/v2/pkg/golinters/loglinter"
-   // ....
-   // ....
-   // В методе Build() в return []*linter.Config{}:
-    linter.NewConfig(loglinter.New(nil)).WithLoadForGoAnalysis(),
+    ```go
+    import "github.com/golangci/golangci-lint/v2/pkg/golinters/loglinter"
+    // ....
+    // ....
+    // В методе Build() в return []*linter.Config{}:
+        linter.NewConfig(loglinter.New(nil)).WithLoadForGoAnalysis(),
    ```
 
 4. **Собрать golangci-lint**
-   ```bash
-   make build
-   ```
+    ```bash
+    make build
+    ```
 
 5. **Линтер готов к использованию**
     В проекте, где он будет использоваться можно скопировать конфиг из pkg/config_example
 
-   ```bash
-   ./golangci-lint run --enable=loglinter ./...
-   ```
+    ```bash
+    ./golangci-lint run --enable=loglinter ./...
+    ```
+
+# UNIT ТЕСТЫ
+    ```bash
+    go test ./pkg/analyzer
+    ```
+
+    Тестовые файлы для каждого правила находятся в тематических папках в pkg/analyzer/testdata
