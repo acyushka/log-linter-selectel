@@ -74,7 +74,7 @@ func validateLogMessage(pass *analysis.Pass, call *ast.CallExpr) {
 
 	msg := call.Args[0]
 
-	if HasSensitiveData(msg) {
+	if hasSensitiveData(msg) {
 		pass.Reportf(call.Pos(), errHasSensitiveData)
 	}
 
@@ -89,7 +89,7 @@ func validateLogMessage(pass *analysis.Pass, call *ast.CallExpr) {
 			return
 		}
 
-		if errors := ValidateMsg(msgStr); len(errors) > 0 {
+		if errors := validateMsg(msgStr); len(errors) > 0 {
 			for _, err := range errors {
 				pass.Reportf(lit.Pos(), "%s", err)
 			}
@@ -97,7 +97,7 @@ func validateLogMessage(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 }
 
-func HasSensitiveData(msg ast.Expr) bool {
+func hasSensitiveData(msg ast.Expr) bool {
 	expr, ok := msg.(*ast.BinaryExpr)
 	if !ok || expr.Op != token.ADD {
 		return false
@@ -118,7 +118,7 @@ func HasSensitiveData(msg ast.Expr) bool {
 	return false
 }
 
-func ValidateMsg(msg string) []string {
+func validateMsg(msg string) []string {
 	var errors = []string{}
 
 	if msg == "" {
