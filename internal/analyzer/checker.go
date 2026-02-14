@@ -29,7 +29,7 @@ func run(pass *analysis.Pass) (any, error) {
 				return true
 			}
 
-			if !isLogger(pass, selector.X) {
+			if !isLogger(selector.X) {
 				return true
 			}
 
@@ -42,15 +42,29 @@ func run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-func isLogger(pass *analysis.Pass, expr ast.Expr) bool {
-	t := pass.TypesInfo.TypeOf(expr)
-	if t == nil {
-		return false
+func isLogger(expr ast.Expr) bool {
+	for {
+		switch e := expr.(type) {
+		case *ast.Ident:
+			if e.Name == "slog" || e.Name == "log" || e.Name == "zap" {
+				return true
+			}
+			return false
+
+		case *ast.SelectorExpr:
+			expr = e.X
+
+		case *ast.CallExpr:
+			if sel, ok := e.Fun.(*ast.SelectorExpr); ok {
+				expr = sel.X
+			} else {
+				return false
+			}
+
+		default:
+			return false
+		}
 	}
-
-	typeStr := t.String()
-
-	return strings.Contains(typeStr, "log.Logger") || strings.Contains(typeStr, "slog.Logger") || strings.Contains(typeStr, "zap.Logger") || strings.Contains(typeStr, "zap.SugaredLogger")
 }
 
 func validateLogMessage(pass *analysis.Pass, call *ast.CallExpr) {
