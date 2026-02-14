@@ -4,7 +4,7 @@ import "golang.org/x/tools/go/analysis"
 
 var Analyzer = &analysis.Analyzer{
 	Name: "loglinter",
-	Doc:  "analyze logs in the code and check their compliance with rules.",
+	Doc:  "analyze logs in the code and check their compliance with rules",
 	Run:  run,
 }
 
