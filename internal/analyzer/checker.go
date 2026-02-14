@@ -3,18 +3,11 @@ package analyzer
 import (
 	"go/ast"
 	"go/token"
+	"strconv"
 	"strings"
 	"unicode"
 
 	"golang.org/x/tools/go/analysis"
-)
-
-const (
-	errIsEmpty          = "лог должен быть непустым"
-	errHasEmoji         = "лог не должен содержать спецсимволы или эмодзи"
-	errHasNotLower      = "лог должен начинаться со строчной буквы"
-	errHasNotEnglish    = "лог должен быть только на английском языке"
-	errHasSensitiveData = "лог содержит потенциально чувствительные данные"
 )
 
 var sensitiveData = []string{
@@ -67,7 +60,7 @@ func validateLogMessage(pass *analysis.Pass, call *ast.CallExpr) {
 
 	msg := call.Args[0]
 
-	if hasSensitiveData(msg) {
+	if HasSensitiveData(msg) {
 		pass.Reportf(call.Pos(), errHasSensitiveData)
 	}
 
@@ -77,7 +70,12 @@ func validateLogMessage(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 
 	if lit.Kind == token.STRING {
-		if errors := validateMsg(lit.Value); len(errors) > 0 {
+		msgStr, err := strconv.Unquote(lit.Value)
+		if err != nil {
+			return
+		}
+
+		if errors := ValidateMsg(msgStr); len(errors) > 0 {
 			for _, err := range errors {
 				pass.Reportf(lit.Pos(), "%s", err)
 			}
@@ -85,7 +83,7 @@ func validateLogMessage(pass *analysis.Pass, call *ast.CallExpr) {
 	}
 }
 
-func hasSensitiveData(msg ast.Expr) bool {
+func HasSensitiveData(msg ast.Expr) bool {
 	expr, ok := msg.(*ast.BinaryExpr)
 	if !ok || expr.Op != token.ADD {
 		return false
@@ -106,7 +104,9 @@ func hasSensitiveData(msg ast.Expr) bool {
 	return false
 }
 
-func validateMsg(msg string) (errors []string) {
+func ValidateMsg(msg string) []string {
+	var errors = []string{}
+
 	if msg == "" {
 		errors = append(errors, errIsEmpty)
 
@@ -156,7 +156,7 @@ func isEnglish(r rune) bool {
 		return true
 	}
 
-	if unicode.IsSpace(r) || unicode.IsPunct(r) || unicode.IsDigit(r) {
+	if unicode.IsSpace(r) || r == ':' || unicode.IsDigit(r) {
 		return true
 	}
 
@@ -175,7 +175,7 @@ func isEmoji(r rune) bool {
 		return true
 	}
 
-	special := "!@#$%^&*()_+{}[]:;<>,.?~\\|/`'\""
+	special := "!@#$%^&*()_+{}[];<>,.?~\\|/`'\""
 	for _, s := range special {
 		if r == s {
 			return true
